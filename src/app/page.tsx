@@ -38,7 +38,14 @@ export default function HomePage() {
               <p className="text-xs text-amber-700 font-medium">우리 동네 행사 & 지원금 한눈에</p>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link
+              href="/blog"
+              className="text-xs sm:text-sm font-bold text-amber-900 hover:text-amber-600 bg-amber-50 hover:bg-amber-100/80 px-3 py-1.5 rounded-xl border border-amber-200 transition-colors flex items-center gap-1"
+            >
+              <span>📝</span>
+              <span>블로그</span>
+            </Link>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-800 border border-amber-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               성남시 실시간
@@ -116,7 +123,7 @@ export default function HomePage() {
                   </div>
 
                   <h4 className="text-lg font-bold text-stone-900 group-hover:text-amber-600 transition-colors line-clamp-1 mb-2">
-                    <Link href={`/info/${item.id}`}>
+                    <Link href="/blog">
                       {item.title}
                     </Link>
                   </h4>
@@ -137,10 +144,10 @@ export default function HomePage() {
                   </div>
 
                   <Link
-                    href={`/info/${item.id}`}
+                    href="/blog"
                     className="mt-3 block w-full text-center py-2 rounded-xl bg-stone-50 hover:bg-amber-500 text-stone-700 hover:text-white font-semibold text-xs transition-colors"
                   >
-                    상세 정보 보기 →
+                    자세히 보기 →
                   </Link>
                 </div>
               </article>
@@ -184,7 +191,7 @@ export default function HomePage() {
                   </div>
 
                   <h4 className="text-lg font-bold text-stone-900 group-hover:text-emerald-700 transition-colors mb-2">
-                    <Link href={`/info/${item.id}`}>
+                    <Link href="/blog">
                       {item.title}
                     </Link>
                   </h4>
@@ -205,10 +212,10 @@ export default function HomePage() {
                   </div>
 
                   <Link
-                    href={`/info/${item.id}`}
+                    href="/blog"
                     className="mt-3 block w-full text-center py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm shadow-emerald-200 transition-colors"
                   >
-                    상세 혜택 보기 →
+                    자세히 보기 →
                   </Link>
                 </div>
               </article>
