@@ -11,11 +11,13 @@ interface Message {
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
+  const [inputQuery, setInputQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       sender: 'bot',
-      text: '안녕하세요! 👋 부산나우 AI 상담원입니다. 궁금하신 내용은 아래 자주 묻는 질문 버튼을 눌러 확인해 주세요.',
+      text: '안녕하세요! 👋 (멍멍) AI 상담원입니다. 궁금하신 내용을 질문 버튼으로 선택하거나 직접 입력해 주세요!',
     },
   ]);
 
@@ -29,25 +31,81 @@ export default function Chatbot() {
     if (isOpen) {
       scrollToBottom();
     }
-  }, [messages, isOpen]);
+  }, [messages, isLoading, isOpen]);
 
+  // 미리 정의된 질문 클릭 처리
   const handleSelectQuestion = (question: string, answer: string) => {
+    if (isLoading) return;
+
     const userMsgId = `user-${Date.now()}`;
     const botMsgId = `bot-${Date.now()}`;
 
-    // 1. 내 질문 추가
     setMessages((prev) => [
       ...prev,
       { id: userMsgId, sender: 'user', text: question },
     ]);
 
-    // 2. 약간의 시간차 후 AI 답변 추가 (자연스러운 느낌)
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
         { id: botMsgId, sender: 'bot', text: answer },
       ]);
     }, 300);
+  };
+
+  // AI API (/api/chat) 직접 질문 호출
+  const handleSendToAI = async (textToSend: string) => {
+    const trimmed = textToSend.trim();
+    if (!trimmed || isLoading) return;
+
+    const userMsgId = `user-${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      { id: userMsgId, sender: 'user', text: trimmed },
+    ]);
+    setInputQuery('');
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: trimmed }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const botAnswer = data.response || data.text || '답변을 생성하지 못했습니다.';
+
+      const botMsgId = `bot-${Date.now()}`;
+      setMessages((prev) => [
+        ...prev,
+        { id: botMsgId, sender: 'bot', text: botAnswer },
+      ]);
+    } catch (err) {
+      console.error('AI chat error:', err);
+      const botMsgId = `bot-${Date.now()}`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: botMsgId,
+          sender: 'bot',
+          text: '죄송합니다. AI 답변을 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSendToAI(inputQuery);
   };
 
   return (
@@ -67,23 +125,23 @@ export default function Chatbot() {
         `}
       >
         {/* 상단 헤더 */}
-        <div className="bg-blue-600 text-white px-4 py-3.5 flex items-center justify-between shadow-md shrink-0">
+        <div className="bg-yellow-400 text-slate-900 px-4 py-3.5 flex items-center justify-between shadow-md shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="relative flex items-center justify-center w-9 h-9 bg-white/20 rounded-full font-bold text-sm">
-              🤖
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-blue-600 rounded-full"></span>
+            <div className="relative flex items-center justify-center w-9 h-9 bg-slate-900/10 rounded-full font-bold text-sm">
+              🐶
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-yellow-400 rounded-full"></span>
             </div>
             <div>
-              <h3 className="font-semibold text-sm leading-tight">AI 상담원</h3>
-              <p className="text-[11px] text-blue-100 flex items-center gap-1 mt-0.5">
-                <span className="inline-block w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></span>
+              <h3 className="font-bold text-sm leading-tight">(멍멍)</h3>
+              <p className="text-[11px] text-slate-700 flex items-center gap-1 mt-0.5 font-medium">
+                <span className="inline-block w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                 온라인 · 즉시 답변
               </p>
             </div>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1.5 hover:bg-white/10 rounded-full transition-colors focus:outline-none"
+            className="p-1.5 hover:bg-slate-900/10 rounded-full transition-colors focus:outline-none"
             aria-label="채팅창 닫기"
           >
             <svg
@@ -112,14 +170,14 @@ export default function Chatbot() {
               }`}
             >
               {msg.sender === 'bot' && (
-                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs mr-2 shrink-0 self-end mb-1">
-                  🤖
+                <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center text-xs mr-2 shrink-0 self-end mb-1">
+                  🐶
                 </div>
               )}
               <div
                 className={`max-w-[78%] px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed shadow-xs ${
                   msg.sender === 'user'
-                    ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none'
+                    ? 'bg-yellow-400 text-slate-900 font-medium rounded-2xl rounded-tr-none'
                     : 'bg-white text-slate-800 border border-slate-200/80 rounded-2xl rounded-tl-none'
                 }`}
               >
@@ -127,35 +185,74 @@ export default function Chatbot() {
               </div>
             </div>
           ))}
+
+          {/* AI 로딩 스피너 표시 */}
+          {isLoading && (
+            <div className="flex justify-start items-center">
+              <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center text-xs mr-2 shrink-0">
+                🐶
+              </div>
+              <div className="bg-white text-slate-500 border border-slate-200/80 px-4 py-2.5 rounded-2xl rounded-tl-none text-xs flex items-center gap-1.5 shadow-xs">
+                <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                <span className="ml-1 text-slate-400">생각 중...</span>
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
-        {/* 하단 질문 버튼 목록 */}
+        {/* 하단 질문 선택 + 직접 입력 영역 */}
         <div className="p-3 bg-white border-t border-slate-100 shrink-0">
           <p className="text-[11px] font-semibold text-slate-400 mb-2 px-1">
-            💡 자주 묻는 질문을 선택하세요
+            💡 자주 묻는 질문 선택
           </p>
-          <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+          <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
             {chatData.map((item, idx) => (
               <button
                 key={idx}
+                disabled={isLoading}
                 onClick={() => handleSelectQuestion(item.question, item.answer)}
-                className="w-full text-left text-xs bg-blue-50/80 hover:bg-blue-100 text-blue-700 active:bg-blue-200 border border-blue-200/60 py-2 px-3 rounded-xl transition-all duration-150 font-medium flex items-center justify-between group"
+                className="w-full text-left text-xs bg-amber-50/80 hover:bg-amber-100 text-amber-900 active:bg-amber-200 border border-amber-200/60 py-2 px-3 rounded-xl transition-all duration-150 font-medium flex items-center justify-between group disabled:opacity-50"
               >
                 <span>{item.question}</span>
-                <span className="text-blue-400 group-hover:translate-x-0.5 transition-transform">
+                <span className="text-amber-500 group-hover:translate-x-0.5 transition-transform">
                   ›
                 </span>
               </button>
             ))}
           </div>
+
+          {/* 직접 질문 입력창 */}
+          <form onSubmit={handleFormSubmit} className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1.5">
+            <input
+              type="text"
+              value={inputQuery}
+              onChange={(e) => setInputQuery(e.target.value)}
+              placeholder="질문을 직접 입력해 보세요..."
+              disabled={isLoading}
+              className="flex-1 text-xs bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:bg-white transition-all disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !inputQuery.trim()}
+              className="bg-yellow-400 hover:bg-yellow-500 disabled:bg-slate-200 text-slate-900 font-bold p-2 rounded-xl transition-colors shrink-0 focus:outline-none disabled:cursor-not-allowed"
+              aria-label="질문 전송"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </form>
         </div>
       </div>
 
       {/* 플로팅 버튼 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-5 right-5 z-50 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300"
+        className="fixed bottom-5 right-5 z-50 w-14 h-14 bg-yellow-400 hover:bg-yellow-500 text-slate-900 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-yellow-200"
         aria-label={isOpen ? '채팅창 닫기' : '채팅창 열기'}
       >
         {isOpen ? (
