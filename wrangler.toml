@@ -6,3 +6,7 @@ NODE_VERSION = "22"
 
 [ai]
 binding = "AI"
+
+[[kv_namespaces]]
+binding = "CHAT_KV"
+id = "3ca5b14372364f55bdf98e82ae045d11"
